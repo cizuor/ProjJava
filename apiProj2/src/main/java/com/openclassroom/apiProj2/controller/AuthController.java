@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,10 +36,10 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         if (userService.findByUsername(user.getName()) != null) {
-            return ResponseEntity.badRequest().body("Username already exists");
+            return ResponseEntity.badRequest().body("{\"error\":\"Username already exists\"}");
         }
         if(userService.findByUserEmail(user.getEmail()) != null){
-            return ResponseEntity.badRequest().body("email already used");
+            return ResponseEntity.badRequest().body("{\"error\":\"Email already used\"}");
         }
         
         User savedUser = userService.register(user);
@@ -47,21 +48,54 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user) {
-        boolean success = userService.login(user.getName(), user.getPassword());
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String password = body.get("password");
+
+        if (email == null || password == null) {
+            return ResponseEntity.status(400).body("{}");
+        }
+
+        boolean success = userService.login(email, password);
         if (success) {
-            String token = jwtUtils.generateToken(user.getName());
+            String token = jwtUtils.generateToken(userService.findByUserEmail(email).getName());
             return ResponseEntity.ok(Map.of("token", token));
         } else {
-            return ResponseEntity.status(401).body("Login failed");
+            return ResponseEntity.status(401).body("{}");
         }
     }
 
 
 
-    /*@GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser() {
-        // Retourne les infos de l'utilisateur connecté
-    }*/
+    @GetMapping("/me")
+    public ResponseEntity<?> me(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader  == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body("{}");
+        }
+
+        String token = authHeader.substring(7); // enlève "Bearer "
+
+        String username;
+        try {
+            username = jwtUtils.extractUsername(token);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("{}");
+        }
+
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return ResponseEntity.status(404).body("{}");
+        }
+
+
+        // Tu peux choisir de ne pas renvoyer le mot de passe
+        Map<String, Object> userInfo = Map.of(
+            "id", user.getId(),
+            "name", user.getName(),
+            "email", user.getEmail()
+        );
+
+        return ResponseEntity.ok(userInfo);
+    }
 
 }
