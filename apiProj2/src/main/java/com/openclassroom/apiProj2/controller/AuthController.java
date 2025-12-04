@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,7 @@ import com.openclassroom.apiProj2.security.JwtUtils;
 import com.openclassroom.apiProj2.service.UserService;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
     
     @Autowired
@@ -41,7 +42,8 @@ public class AuthController {
         }
         
         User savedUser = userService.register(user);
-        return ResponseEntity.ok(savedUser);
+        String token = jwtUtils.generateToken(savedUser.getName());
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     @PostMapping("/login")
@@ -54,5 +56,12 @@ public class AuthController {
             return ResponseEntity.status(401).body("Login failed");
         }
     }
+
+
+
+    /*@GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser() {
+        // Retourne les infos de l'utilisateur connecté
+    }*/
 
 }

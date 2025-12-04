@@ -44,6 +44,13 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public boolean login(String name, String rawPassword) {
+        Optional<User> userOpt = userRepository.findByName(name);
+            if (userOpt.isEmpty()) return false;
+                return passwordEncoder.matches(rawPassword, userOpt.get().getPassword());
+    }
+
+
     public User findByUsername(String username) {
         return userRepository.findByName(username).orElse(null);
     }
