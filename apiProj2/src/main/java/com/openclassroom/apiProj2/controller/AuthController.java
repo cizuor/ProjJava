@@ -61,7 +61,7 @@ public class AuthController {
             String token = jwtUtils.generateToken(userService.findByUserEmail(email).getName());
             return ResponseEntity.ok(Map.of("token", token));
         } else {
-            return ResponseEntity.status(401).body("{}");
+            return ResponseEntity.status(401).body("{\"message\": \"error\"}");
         }
     }
 
