@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -13,7 +14,9 @@ import java.util.Date;
 
 @Component
 public class JwtUtils {
-    private final String jwtSecret = "monSecretSuperSimplemaispassisimplesinonc'estpassecure"; // à remplacer
+
+    @Value("${jwt.secret}")
+    private String jwtSecret ; 
     private final long jwtExpirationMs = 86400000; // 1 jour
 
     private Key getSigningKey() {
