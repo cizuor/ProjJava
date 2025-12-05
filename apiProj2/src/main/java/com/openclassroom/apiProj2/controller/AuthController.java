@@ -88,7 +88,8 @@ public class AuthController {
         }
 
 
-        // Tu peux choisir de ne pas renvoyer le mot de passe
+        // c'est pas un DTO mais c'est tout comme? 
+        //pour un projet minimaliste je pense que cela suffi
         Map<String, Object> userInfo = Map.of(
             "id", user.getId(),
             "name", user.getName(),
