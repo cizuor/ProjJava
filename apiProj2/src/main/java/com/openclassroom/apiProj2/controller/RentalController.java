@@ -29,5 +29,4 @@ public class RentalController {
         return Collections.singletonMap("rentals", rentals);
     }
 
-
 }

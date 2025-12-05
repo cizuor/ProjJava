@@ -2,7 +2,9 @@ package com.openclassroom.apiProj2.service;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -10,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.openclassroom.apiProj2.model.User;
+import com.openclassroom.apiProj2.model.DTO.UserDTO;
 import com.openclassroom.apiProj2.repository.UserRepository;
 
 import lombok.Data;
@@ -24,28 +27,37 @@ public class UserService {
 
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public Optional<User> getUser(final Long id) {
-        return userRepository.findById(id);
+    public UserDTO getUser(final Long id) {
+        Optional<User> userOptional = userRepository.findById(id);
+        if(userOptional.isPresent()){
+             return new UserDTO(userOptional.get());
+        }
+        
+        return null;
     }
 
-    public Iterable<User> getUser() {
-        return userRepository.findAll();
+    public List<UserDTO> getUser() {
+
+        List<User> users = (List<User>)userRepository.findAll();
+        return users.stream()
+        .map(user -> new UserDTO(user)) 
+        .collect(Collectors.toList());
     }
 
     public void deleteUser(final Long id) {
         userRepository.deleteById(id);
     }
 
-    public User saveUser(User user) {
+    public UserDTO saveUser(User user) {
         User savedUser = userRepository.save(user);
-        return savedUser;
+        return new UserDTO(savedUser);
     }
 
-    public User register(User user){
+    public UserDTO register(User user){
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        return userRepository.save(user);
+        return new UserDTO(userRepository.save(user));
     }
 
     public boolean login(String email, String rawPassword) {
@@ -55,11 +67,21 @@ public class UserService {
     }
 
 
-    public User findByUsername(String username) {
-        return userRepository.findByName(username).orElse(null);
+    public UserDTO findByUsername(String username) {
+
+        Optional<User> userOptional = userRepository.findByName(username);
+        if(userOptional.isPresent()){
+             return new UserDTO(userOptional.get());
+        }
+        return null;
     }
-    public User findByUserEmail(String mail) {
-        return userRepository.findByEmail(mail).orElse(null);
+    public UserDTO findByUserEmail(String mail) {
+
+        Optional<User> userOptional = userRepository.findByEmail(mail);
+        if(userOptional.isPresent()){
+             return new UserDTO(userOptional.get());
+        }
+        return null;
     }
 
 
