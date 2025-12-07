@@ -21,6 +21,13 @@ import com.openclassroom.apiProj2.service.FileService;
 import com.openclassroom.apiProj2.service.RentalService;
 import com.openclassroom.apiProj2.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/rentals")
+@Tag(name = "Rentals", description = "gestion des locations (CRUD)")
 public class RentalController {
 
     @Autowired
@@ -42,20 +50,40 @@ public class RentalController {
     @Autowired
     private FileService fileService;
 
+     @Operation(
+        summary = "Obtenir toutes les locations",
+        description = "Retourne la liste complète des locations disponibles."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Liste des locations renvoyée")
+    })
     @GetMapping()
     public Map<String, List<Rental>> getRentals(){
         List<Rental> rentals = rentalService.getRental();
         return Collections.singletonMap("rentals", rentals);
     }
 
-
+    @Operation(
+        summary = "Créer une nouvelle location",
+        description = "Ajoute une nouvelle location. Nécessite un token JWT."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Location créée"),
+        @ApiResponse(responseCode = "401", description = "Authentification requise ou invalide")
+    })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> addRental(@RequestParam("name") String name,
-            @RequestParam("surface") Long surface,
-            @RequestParam("price") Long price,
-            @RequestParam("description") String description,
-            @RequestParam("picture") MultipartFile picture,
-            Authentication authentication){
+    public ResponseEntity<?> addRental(
+        @Parameter(description = "Nom de la location") 
+        @RequestParam("name") String name,
+        @Parameter(description = "Surface en m²") 
+        @RequestParam("surface") Long surface,
+        @Parameter(description = "Prix en euros") 
+        @RequestParam("price") Long price,
+        @Parameter(description = "Description détaillée") 
+        @RequestParam("description") String description,
+         @Parameter(description = "Photo associée", content = @Content(mediaType = "image/jpeg"))
+        @RequestParam("picture") MultipartFile picture,
+        Authentication authentication){
             try {
                 String pictureUrl = fileService.saveFile(picture);
                 String nom = authentication.getName();
@@ -79,11 +107,26 @@ public class RentalController {
             }
     }
 
+    @Operation(
+        summary = "Mettre à jour une location",
+        description = "Modifie une location existante. Nécessite un token JWT."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Location mise à jour"),
+        @ApiResponse(responseCode = "401", description = "Authentification requise ou invalide"),
+        @ApiResponse(responseCode = "404", description = "Location introuvable")
+    })
     @PutMapping(value = "/{id}",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateRental(@PathVariable Long id,
+    public ResponseEntity<?> updateRental(
+        @Parameter(description = "ID de la location à modifier")
+        @PathVariable Long id,
+        @Parameter(description = "Nom de la location")
             @RequestParam("name") String name,
+            @Parameter(description = "Surface en m²")
             @RequestParam("surface") Long surface,
+            @Parameter(description = "Prix en euros")
             @RequestParam("price") Long price,
+            @Parameter(description = "Description de la location")
             @RequestParam("description") String description,
             Authentication authentication){
         try {
@@ -108,8 +151,16 @@ public class RentalController {
     }
 
 
+    @Operation(
+        summary = "Récupérer une location par son ID",
+        description = "Retourne les détails d'une location spécifique."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Location trouvée"),
+        @ApiResponse(responseCode = "404", description = "Location non trouvée")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<Rental> getRental(@PathVariable Long id){
+    public ResponseEntity<Rental> getRental(@Parameter(description = "ID du rental recherché") @PathVariable Long id){
         Optional<Rental> rentalOptional = rentalService.getRental(id);
         if(rentalOptional.isPresent()){
             return ResponseEntity.ok(rentalOptional.get());

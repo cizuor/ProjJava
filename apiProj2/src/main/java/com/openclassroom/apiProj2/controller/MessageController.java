@@ -14,14 +14,41 @@ import com.openclassroom.apiProj2.model.Message;
 import com.openclassroom.apiProj2.service.MessageService;
 import com.openclassroom.apiProj2.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/messages")
+@Tag(name = "Message", description = "gestion des message ")
 public class MessageController {
 
     @Autowired
     private MessageService messageService;
 
-
+    @Operation(
+        summary = "Ajouter un nouveau message",
+        description = "Ajoute un nouveau message à la base de données."
+    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        description = "Détails du message à envoyer",
+        required = true,
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(example = "{\"rental_id\": \"1\", \"user_id\": \"1\", \"message\": \"Bonjour, je suis intéressé !\"}")
+        )
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Message créé avec succès",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Message send with success\"}"))
+        ),
+        @ApiResponse(responseCode = "400", description = "Requête invalide (iduser,idrental ou message vide)", content = @Content)
+    })
     @PostMapping()
     public ResponseEntity<?> addMessage(@RequestBody Map<String, String> body){
         String rentalid = body.get("rental_id");

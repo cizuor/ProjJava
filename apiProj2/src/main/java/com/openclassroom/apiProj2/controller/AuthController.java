@@ -20,8 +20,17 @@ import com.openclassroom.apiProj2.model.DTO.UserDTO;
 import com.openclassroom.apiProj2.security.JwtUtils;
 import com.openclassroom.apiProj2.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "Gestion de l'authentification et des utilisateurs")
 public class AuthController {
     
     @Autowired
@@ -34,6 +43,18 @@ public class AuthController {
     private JwtUtils jwtUtils;
 
 
+    @Operation(
+        summary = "Inscrire un nouvel utilisateur",
+        description = "Ajoute un nouvel utilisateur à la base de données et retourne un token JWT."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Utilisateur créé avec succès",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"token\": \"eyJhbGciOiJIUzI...\"}"))
+        ),
+        @ApiResponse(responseCode = "400", description = "Requête invalide (Email ou Username déjà existant)", content = @Content)
+    })
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         if (userService.findByUsername(user.getName()) != null) {
@@ -48,6 +69,28 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
+
+    @Operation(
+        summary = "Connexion utilisateur",
+        description = "Authentifie un utilisateur via email et mot de passe pour obtenir un token JWT."
+    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        description = "Identifiants de l'utilisateur",
+        required = true,
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(example = "{\"email\": \"test@test.com\", \"password\": \"password123\"}")
+        )
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Connexion réussie",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"token\": \"eyJhbGciOiJIUzI...\"}"))
+        ),
+        @ApiResponse(responseCode = "400", description = "Champs manquants", content = @Content),
+        @ApiResponse(responseCode = "401", description = "Authentification échouée (Mauvais identifiants)", content = @Content)
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         String email = body.get("email");
@@ -67,7 +110,20 @@ public class AuthController {
     }
 
 
-
+    @Operation(
+        summary = "Récupérer l'utilisateur courant",
+        description = "Renvoie les informations de l'utilisateur connecté basé sur le token JWT fourni dans le header.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Informations de l'utilisateur retournées",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"id\": 1, \"name\": \"John Doe\", \"email\": \"john@test.com\"}"))
+        ),
+        @ApiResponse(responseCode = "401", description = "Token invalide ou manquant", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Utilisateur introuvable", content = @Content)
+    })
     @GetMapping("/me")
     public ResponseEntity<?> me(@RequestHeader("Authorization") String authHeader) {
         if (authHeader  == null || !authHeader.startsWith("Bearer ")) {
@@ -89,8 +145,6 @@ public class AuthController {
         }
 
 
-        // c'est pas un DTO mais c'est tout comme? 
-        //pour un projet minimaliste je pense que cela suffi
         Map<String, Object> userInfo = Map.of(
             "id", user.getId(),
             "name", user.getName(),
