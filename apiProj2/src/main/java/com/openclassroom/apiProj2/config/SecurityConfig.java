@@ -45,7 +45,6 @@ public class SecurityConfig {
             
             // 4. Autoriser l'accès aux routes d'authentification
             .authorizeHttpRequests(auth -> auth
-                // IMPORTANT : Adapte "/api/auth/**" si tes routes sont différentes
                 .requestMatchers("/api/auth/login","/api/auth/register",
                 "/swagger-ui.html",
                     "/swagger-ui/**",
